@@ -1,0 +1,9 @@
+# Tested with the versions noted in brackets.
+# Minimums are conservative; newer releases are expected to work.
+
+torch>=2.0            # [tested: 2.12.1]
+opencv-python>=4.5    # [tested: 5.0.0]
+numpy>=1.22           # [tested: 2.4.6]
+
+# torchvision is NOT required — the U-Net is defined from scratch in
+# src/train_unet.py so the package footprint stays small.

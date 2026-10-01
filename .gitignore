@@ -1,0 +1,46 @@
+# ---------------------------------------------------------------------------
+# Patient data must never enter this repository.
+# These rules are deliberately broad.
+# ---------------------------------------------------------------------------
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.tif
+*.tiff
+*.dcm
+*.nii
+*.nii.gz
+
+# Pipeline outputs (contain cropped patient imagery)
+crops/
+masks/
+overlays/
+extracted/
+extracted_*/
+work/
+unet_run/
+
+# Metadata that embeds patient folder names, IDs or acquisition timestamps
+manifest.csv
+mask_qc.csv
+roi_boxes.csv
+to_check.csv
+
+# Model checkpoints — models/ is force-added explicitly, see README
+*.pt
+*.pth
+!models/unet_tissue_v1.pt
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
