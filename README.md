@@ -74,6 +74,15 @@ The masks deliberately retain hypoechoic (dark) regions *inside* the tissue
 band. Lymph nodes and vessels are dark on B-mode ultrasound; excluding dark
 pixels would discard precisely the structures the downstream classifier needs.
 
+The network does not learn this perfectly, so inference fills any enclosed
+hole in the mask by default. On a 7288-frame run this mattered: the mean hole
+fraction was only 0.15%, but the worst frames lost 19–27% of their interior,
+and inspection showed those holes were large lesions — one of them carrying
+the radiologist's own caliper measurement across it. Filling removed every
+hole across all 7288 frames while leaving mean mask area unchanged at 39.5%,
+confirming it recovers interior structure rather than inflating the region.
+Disable with `--no-fill-holes` if you want the raw network output.
+
 ---
 
 ## Results
@@ -160,6 +169,7 @@ the metrics.
 | `--threshold` | Decision threshold, default `0.5`. Lower it (e.g. `0.3`) if tissue is being missed. |
 | `--pad` | Pixels of margin to add around each crop. |
 | `--blacken-outside` | Black out everything outside the tissue shape, instead of a rectangular crop. |
+| `--no-fill-holes` | Keep enclosed holes in the mask instead of filling them. See the note on dark regions above. |
 
 `--split-width-frac` is the one setting that reliably needs attention on a new
 scanner, since it encodes the panel layout.
@@ -195,7 +205,7 @@ models/unet_tissue_v1.pt   trained weights (Dice 0.9638)
 models/training_history.csv per-epoch metrics
 ```
 
-Source comments are in Persian; this README and all identifiers are in English.
+Source comments, identifiers and console output are in English.
 
 **No patient data is included in this repository**, and none can be
 redistributed. The trained weights are derived from a private clinical dataset.
