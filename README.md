@@ -104,9 +104,10 @@ the operator's manual crop with **100.0%** mean coverage (worst case 98.5%).
 Panel count agrees with the operator's in 89% of frames; most disagreements
 are frames where the operator cropped only one of two visible panels.
 
-**Cross-site transfer** (second institution, different scanner layout — 810×1080
-portrait instead of 1440×1080 landscape, different vendor header, predominantly
-single-pane, with caliper text and colour Doppler bars; 120 frames sampled):
+**Cross-site transfer** (second institution, different scanner layout — 1080×810
+instead of 1440×1080 (same 4:3 landscape aspect, lower resolution), different
+vendor header, predominantly single-pane, with caliper text and colour Doppler
+bars; 120 frames sampled):
 
 | proxy metric | value |
 |--------------|------:|
