@@ -104,22 +104,42 @@ the operator's manual crop with **100.0%** mean coverage (worst case 98.5%).
 Panel count agrees with the operator's in 89% of frames; most disagreements
 are frames where the operator cropped only one of two visible panels.
 
-**Cross-site transfer** (second institution, different scanner layout — 1080×810
-instead of 1440×1080 (same 4:3 landscape aspect, lower resolution), different
-vendor header, predominantly single-pane, with caliper text and colour Doppler
-bars; 120 frames sampled):
+**Second institution, scored against hand-drawn masks.** The frames are 1080×810 from a
+different scanner layout, with a different vendor header, mostly single-pane, with
+caliper text and colour Doppler bars. The model never saw this site in training. One
+annotator drew masks on 30 frames (one per patient, chosen at random), following
+[protocol v1](docs/ANNOTATION_GUIDE.md): the whole image field, dark areas included.
 
-| proxy metric | value |
-|--------------|------:|
-| leakage into vendor header | 0.00% |
-| interior holes in mask | 0.3% mean |
-| frames with >5% holes | 2 / 120 |
+| method | Dice, mean [95% bootstrap CI] |
+|--------|------------------------------:|
+| this model, default settings (holes filled) | 0.9746 [0.9666, 0.9815] |
+| this model, raw network output | 0.9722 [0.9639, 0.9797] |
+| this model reduced to its bounding rectangle | 0.9708 [0.9630, 0.9775] |
+| constant mask (leave-one-out majority of the other frames) | 0.8988 [0.8630, 0.9302] |
+| BUSClean scan-area crop, run unmodified | 0.9643 [0.9428, 0.9805] |
+| the classical teacher in this repository | 0.36 (empty mask on 18 of 30 frames) |
 
-⚠️ **These cross-site numbers are proxies, not accuracy.** No ground-truth
-annotations exist for the second site, so they show only that the output is
-well-formed, not that it is correct. Establishing genuine cross-site accuracy
-requires manually annotating a sample from that site. Treat transfer as
-promising but unproven.
+How to read this:
+
+- **The model transfers to this site; the classical teacher does not.** The teacher's
+  thresholds are tuned to the first scanner and fail on this one. That is a statement
+  about *those thresholds*, not about rule-based cropping in general.
+- **The model and BUSClean are not distinguishable on these frames.** Paired difference
+  (model minus BUSClean): +0.010 [−0.002, +0.027] with the default model, and +0.007
+  [−0.010, +0.029] when the model is reduced to a rectangle, the same output type as
+  BUSClean. Both intervals span zero. We make **no claim of better transfer** than
+  BUSClean. BUSClean's worst frame scored 0.75 against 0.91 for the model; both of its low
+  frames are cases where it trimmed a dark part of the picture, which is a boundary
+  judgement more than a gross failure.
+- **A constant mask is already strong (0.90)**, because the layout of these scanners is
+  nearly fixed. The model's contribution is the step from about 0.90 to about 0.97.
+- **Limits.** 30 frames, one annotator (so no ceiling: some of the remaining error is
+  ordinary disagreement about an edge), and the two sites differ in file format as well as
+  scanner (PNG against JPEG), so the two cannot be separated. The reference masks are
+  nearly rectangular, which favours rectangular outputs.
+
+Reproduce, or extend with your own frames, with the tools described under
+[Measuring accuracy on your own data](#measuring-accuracy-on-your-own-data).
 
 ---
 
@@ -194,6 +214,43 @@ The teacher's thresholds live in a clearly marked block at the top of
 Training splits **by patient**, never by image. Frames from one patient are
 near-duplicates; an image-level split leaks and inflates the reported score.
 
+
+### Measuring accuracy on your own data
+
+A number for a new scanner needs masks that a person drew. Two tools handle that, plus a
+written protocol so that everyone draws by the same rule.
+
+```bash
+# pick frames (one per patient, random) and copy them to ./annotation_work/images
+python src/annotate_masks.py prepare --raw-dir /path/to/frames --n 30
+
+# draw masks; every annotator gets a separate folder
+python src/annotate_masks.py draw --annotator alice
+
+# sanity-check them (--header-rows = height of the scanner's header strip in pixels)
+python src/annotate_masks.py check --annotator alice --header-rows 100
+
+# score the model, with the baselines that make the number meaningful
+python src/evaluate_masks.py --annotator alice --model models/unet_tissue_v1.pt \
+    --constant-baseline --busclean-repo /path/to/bus-cleaning
+```
+
+**Read the [annotation guide](docs/ANNOTATION_GUIDE.md) before drawing.** It states the rule
+(protocol v1: one polygon around the whole image field, dark areas included, header and
+settings excluded), with illustrated examples and the mistakes to avoid.
+
+With **two annotators** on the same frames you can also measure how much people disagree,
+which is the ceiling for any automatic method:
+
+```bash
+python src/annotate_masks.py agreement --a alice --b bob
+```
+
+`prepare` can be re-run with a larger `--n`; it only adds frames and never renumbers or
+overwrites the ones you have already drawn on. `--busclean-repo` is optional and points at a
+clone of [hawaii-ai/bus-cleaning](https://github.com/hawaii-ai/bus-cleaning); it is used
+only to score BUSClean's crop and is not redistributed here.
+
 ---
 
 ## Repository contents
@@ -202,7 +259,11 @@ near-duplicates; an image-level split leaks and inflates the reported score.
 src/make_tissue_masks.py   classical teacher — generates training masks
 src/train_unet.py          U-Net training with augmentation
 src/extract_tissue.py      inference and crop extraction
-models/unet_tissue_v1.pt   trained weights (Dice 0.9638)
+src/annotate_masks.py      draw reference masks by hand; check them; measure agreement
+src/evaluate_masks.py      score the model (and baselines) against hand-drawn masks
+docs/ANNOTATION_GUIDE.md   how to draw the masks (protocol v1), with illustrated examples
+docs/figures/              synthetic example frames for the guide, and the script that makes them
+models/unet_tissue_v1.pt   trained weights (Dice 0.9638 on held-out patients, site 1)
 models/training_history.csv per-epoch metrics
 ```
 
@@ -215,7 +276,10 @@ redistributed. The trained weights are derived from a private clinical dataset.
 
 ## Limitations
 
-- **Cross-site accuracy is unverified.** See the caveat under Results.
+- **Cross-site accuracy rests on one second institution, 30 frames and one annotator.**
+  See the limits listed under Results. Behaviour on other vendors, probes or modalities is
+  unknown, and the file-format difference between the two sites (PNG against JPEG) is
+  confounded with the scanner difference.
 - **Trained on B-mode images from two Iranian centres**, both using an L18-5
   probe. Behaviour on other probes, modalities or vendors is unknown.
 - **Panel splitting is geometric.** We measured no detectable divider between

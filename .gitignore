@@ -12,6 +12,19 @@
 *.nii
 *.nii.gz
 
+# The ONLY images allowed in this repository: the SYNTHETIC illustrations used by the
+# annotation guide (generated from random noise by docs/figures/make_guide_figures.py).
+# Anything else with an image extension stays ignored, in docs/ as everywhere.
+!docs/figures/guide_*.png
+
+# Annotation work: frames copied from patient data, hand-drawn masks, and logs that name
+# patient folders. Never commit any of it.
+annotation_work/
+selection.csv
+annotations_log.csv
+agreement_*.csv
+evaluation*.csv
+
 # Pipeline outputs (contain cropped patient imagery)
 crops/
 masks/
