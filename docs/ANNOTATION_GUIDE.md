@@ -77,6 +77,26 @@ because it carries the patient identifier.
   there. This is the one place where two careful people may differ by a few pixels; that is
   expected and is exactly what the agreement check measures.
 
+### Three tempting shortcuts that are wrong
+
+These were the three most common deviations in our first round of annotation. All three
+look reasonable while you are drawing, which is why they are worth naming.
+
+1. **A box around the lesion.** This is not a region-of-interest task. You are not
+   marking "the interesting part"; you are tracing the whole field, including the large
+   stretches where nothing is happening. A box around the lesion makes your mask differ
+   from everyone else's by a large margin.
+2. **Carving the outline around text.** Measurement text (`+Dist`, `xDist`), calipers and
+   markers drawn on the picture stay **inside**. It can feel tidier to stop the outline just
+   before a block of text; do not. The outline follows the edge of the field, and the text
+   is simply ignored.
+3. **Stopping where the structure ends.** The bottom of the mask is the bottom edge of the
+   picture, not the depth at which the lesion or the interesting layer ends. If the picture
+   continues below, so does your outline.
+
+A quick test: if your outline would look the same on a frame with no lesion at all, you are
+drawing the field. If it depends on where the lesion is, you are not.
+
 ---
 
 ## 3. Drawing one frame, step by step
@@ -90,6 +110,14 @@ because it carries the patient identifier.
 5. Right-click (or press **Z**) to remove the last point if you misplace one.
 6. Press **ENTER** when the outline is closed. It saves and moves to the next frame. (Pressing
    ENTER with an unfinished outline closes it for you as long as it has at least three points.)
+
+**Before you press ENTER, ask five questions:**
+
+1. Does the top sit on the skin line, not below it?
+2. Does it span the full width of the picture, left to right?
+3. Does it go down to the bottom edge of the picture?
+4. Are the lesion, the dark parts and any text lying on the picture all **inside**?
+5. Are the header, settings column and depth ruler all **outside**?
 
 Pixel-perfect corners are not needed. A good outline is within a few pixels of the true edge.
 Do not spend time on it, and do not zoom in to fix tiny errors: consistency across hundreds
@@ -146,6 +174,9 @@ clarified for everyone, rather than each person quietly inventing their own.
 | Starting below the skin line | Loses the top of the picture. |
 | Leaving black areas out | Protocol v1 includes the whole field, dark parts too. Leaving them out makes your mask differ from everyone else's. |
 | Drawing a loose outline far outside the field | Includes screen background that is not part of the picture. |
+| Drawing a box around the lesion | Not a region-of-interest task; the mask is the whole field. |
+| Stopping the outline just before text on the picture | Text on the picture stays inside; carving around it shrinks the field. |
+| Stopping at the depth where the lesion or structure ends | The bottom is the bottom edge of the picture, not where the structure ends. |
 
 ---
 

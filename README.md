@@ -106,9 +106,10 @@ are frames where the operator cropped only one of two visible panels.
 
 **Second institution, scored against hand-drawn masks.** The frames are 1080×810 from a
 different scanner layout, with a different vendor header, mostly single-pane, with
-caliper text and colour Doppler bars. The model never saw this site in training. One
-annotator drew masks on 30 frames (one per patient, chosen at random), following
-[protocol v1](docs/ANNOTATION_GUIDE.md): the whole image field, dark areas included.
+caliper text and colour Doppler bars. The model never saw this site in training. Two
+annotators independently drew masks on the same 30 frames (one per patient, chosen at
+random), following [protocol v1](docs/ANNOTATION_GUIDE.md): the whole image field, dark
+areas included. Unless stated, scores are against annotator A.
 
 | method | Dice, mean [95% bootstrap CI] |
 |--------|------------------------------:|
@@ -117,6 +118,8 @@ annotator drew masks on 30 frames (one per patient, chosen at random), following
 | this model reduced to its bounding rectangle | 0.9708 [0.9630, 0.9775] |
 | constant mask (leave-one-out majority of the other frames) | 0.8988 [0.8630, 0.9302] |
 | BUSClean scan-area crop, run unmodified | 0.9643 [0.9428, 0.9805] |
+| this model against annotator B (same 30 frames) | 0.9577 [0.9488, 0.9662] |
+| **annotator A against annotator B: the ceiling** | **0.9702 [0.9627, 0.9767]** |
 | the classical teacher in this repository | 0.36 (empty mask on 18 of 30 frames) |
 
 How to read this:
@@ -133,8 +136,13 @@ How to read this:
   judgement more than a gross failure.
 - **A constant mask is already strong (0.90)**, because the layout of these scanners is
   nearly fixed. The model's contribution is the step from about 0.90 to about 0.97.
-- **Limits.** 30 frames, one annotator (so no ceiling: some of the remaining error is
-  ordinary disagreement about an edge), and the two sites differ in file format as well as
+- **The model is inside the range of human agreement under annotator A's reading, and
+  below it under B's.** It agrees with A (0.975) about as well as A and B agree with each
+  other (0.970); the paired difference is +0.004 [−0.006, +0.015]. Against B it scores lower
+  (0.958; −0.012 [−0.020, −0.005] relative to the A–B agreement). In the frames we inspected,
+  B's outlines stop before measurement text lying on the picture and at the depth where
+  the structure ends rather than at the bottom of the picture; the protocol rules out both.
+- **Limits.** 30 frames, and the two sites differ in file format as well as
   scanner (PNG against JPEG), so the two cannot be separated. The reference masks are
   nearly rectangular, which favours rectangular outputs.
 
@@ -276,7 +284,7 @@ redistributed. The trained weights are derived from a private clinical dataset.
 
 ## Limitations
 
-- **Cross-site accuracy rests on one second institution, 30 frames and one annotator.**
+- **Cross-site accuracy rests on one second institution, 30 frames and two annotators.**
   See the limits listed under Results. Behaviour on other vendors, probes or modalities is
   unknown, and the file-format difference between the two sites (PNG against JPEG) is
   confounded with the scanner difference.

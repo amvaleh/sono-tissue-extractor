@@ -179,19 +179,28 @@ def fig_correct():
 
 # ---------------------------------------------------------------- Figure 3: common mistakes
 def fig_mistakes():
-    fig, axes = plt.subplots(2, 3, figsize=(11.5, 6.9))
+    fig, axes = plt.subplots(3, 3, figsize=(11.5, 10.2))
     base = (FX0, FY0, FX1, FY1)
 
     def notch_poly(info):
         cx, cy, a, b = info['lesion']
-        top = [(FX0, FY0), (FX1, FY0), (FX1, FY1), (FX0, FY1)]
         # a rectangle with a notch bitten out around the lesion, reached from the left side
         return [(FX0, FY0), (FX1, FY0), (FX1, FY1), (FX0, FY1), (FX0, cy + b + 14), (cx - a - 18, cy + b + 14),
                 (cx - a - 18, cy - b - 14), (cx + a + 18, cy - b - 14), (cx + a + 18, cy + b + 14), (FX0, cy + b + 14)]
 
+    def lesion_box(info):
+        cx, cy, a, b = info['lesion']
+        return field_poly((cx - 170, cy - 110, cx + 170, cy + 150), 2, 6, n_side=1)
+
     cases = [
         ('WRONG: lesion left out', dict(seed=11), lambda i: notch_poly(i), RED,
          'The dark lesion is exactly what the\nclassifier needs. Never cut it out.'),
+        ('WRONG: a box around the lesion', dict(seed=17), lambda i: lesion_box(i), RED,
+         'Not a region-of-interest task. The mask is the\nwhole field, even where nothing is happening.'),
+        ('WRONG: cut short to avoid text', dict(seed=18), lambda i: field_poly((FX0, FY0, FX1 - 205, FY1), 2, 7), RED,
+         'Text lying on the picture stays inside.\nDo not carve the outline around it.'),
+        ('WRONG: stopped where the structure ends', dict(seed=19), lambda i: field_poly((FX0, FY0, FX1, FY0 + 350), 2, 8), RED,
+         'Go down to the bottom edge of the picture,\nnot to where the lesion or structure ends.'),
         ('WRONG: depth ruler included', dict(seed=12), lambda i: field_poly((FX0, FY0, FX1 + 110, FY1), 2, 1), RED,
          'Rulers and numbers beside the\npicture are outside the field.'),
         ('WRONG: header included', dict(seed=13), lambda i: field_poly((FX0 - 150, 20, FX1, FY1), 2, 2), RED,
@@ -210,9 +219,9 @@ def fig_mistakes():
         ax.set_title(title, fontsize=10, color=col, fontweight='bold')
         ax.text(W / 2, H - 4, note, ha='center', va='bottom', color='white', fontsize=8.2,
                 bbox=dict(fc='black', ec='none', alpha=0.6, pad=2))
-    fig.text(0.5, 0.005, 'Synthetic frames (no patient data).', ha='center', fontsize=8.5, color='#444')
-    plt.tight_layout(pad=0.4, rect=(0, 0.02, 1, 1))
-    fig.savefig(os.path.join(OUT, 'guide_mistakes.png'), dpi=130, bbox_inches='tight', pad_inches=0.05)
+    fig.text(0.5, 0.004, 'Synthetic frames (no patient data).', ha='center', fontsize=8.5, color='#444')
+    plt.tight_layout(pad=0.4, rect=(0, 0.015, 1, 1))
+    fig.savefig(os.path.join(OUT, 'guide_mistakes.png'), dpi=125, bbox_inches='tight', pad_inches=0.05)
     plt.close(fig)
 
 
